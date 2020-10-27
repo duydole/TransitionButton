@@ -7,23 +7,26 @@
 //
 
 import UIKit
-import TransitionButton  // 1: First import the TransitionButton library
+import TransitionButton
 
 class FirstViewController: UIViewController {
 
+    /// Did tap TransitionButton
     @IBAction func buttonAction(_ button: TransitionButton) {
-        button.startAnimation() // 2: Then start the animation when the user tap the button
-        let qualityOfServiceClass = DispatchQoS.QoSClass.background
-        let backgroundQueue = DispatchQueue.global(qos: qualityOfServiceClass)
+        /// Start Animation
+        button.startAnimation()
+        
+        /// Create backgroundQueue và execute 1 block
+        let backgroundQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.background)
         backgroundQueue.async(execute: {
-
-            sleep(3) // 3: Do your networking task or background work here.
+            /// Assume do some backgroundtask
+            sleep(3)
 
             DispatchQueue.main.async(execute: { () -> Void in
-                // 4: Stop the animation, here you have three options for the `animationStyle` property:
-                // .expand: useful when the task has been compeletd successfully and you want to expand the button and transit to another view controller in the completion callback
-                // .shake: when you want to reflect to the user that the task did not complete successfly
-                // .normal
+                /// Stop animation with style
+                ///     .expand: useful when the task has been compeletd successfully and you want to expand the button and transit to another view controller in the completion callback
+                ///     .shake: when you want to reflect to the user that the task did not complete successfly
+                ///     .normal
                 button.stopAnimation(animationStyle: .expand, completion: {
                     let secondVC = SecondViewController()
                     self.present(secondVC, animated: true, completion: nil)

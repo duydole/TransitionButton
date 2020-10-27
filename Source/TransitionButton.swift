@@ -22,14 +22,12 @@ public enum StopAnimationStyle {
     case shake
 }
 
-
-
-
 /// UIButton sublass for loading and transition animation. Useful for network based application or where you need to animate an action button while doing background tasks.
  
 @IBDesignable open class TransitionButton : UIButton, UIViewControllerTransitioningDelegate, CAAnimationDelegate {
     
     /// the color of the spinner while animating the button
+    /// Open có nghĩa là có thể kế thừa và override ở module khác.
     @IBInspectable open var spinnerColor: UIColor = UIColor.white {
         didSet {
             spiner.spinnerColor = spinnerColor
@@ -51,6 +49,7 @@ public enum StopAnimationStyle {
         }
     }
     
+    /// spiner là 1 layer Layer, khi nào được gọi sẽ init và add vào self ~ TransitionButton
     private lazy var spiner: SpinerLayer = {
         let spiner = SpinerLayer(frame: self.frame)
         self.layer.addSublayer(spiner)
@@ -89,34 +88,29 @@ public enum StopAnimationStyle {
         self.clipsToBounds  = true
         spiner.spinnerColor = spinnerColor
     }
+
+    // MARK: Public
     
-    /**
-     start animating the button, before starting a task, exemple: before a network call.
-     */
     open func startAnimation() {
-        self.isUserInteractionEnabled = false // Disable the user interaction during the animation
-        self.cachedTitle            = title(for: .normal)  // cache title before animation of spiner
-        self.cachedImage            = image(for: .normal)  // cache image before animation of spiner
+        /// Cache lại TITLE + IMAGE
+        self.isUserInteractionEnabled = false
+        self.cachedTitle = title(for: .normal)
+        self.cachedImage = image(for: .normal)
         
-        self.setTitle("",  for: .normal)                    // place an empty string as title to display a spiner
-        self.setImage(nil, for: .normal)                    // remove the image, if any, before displaying the spinner
+        /// Set nil TITLE + IMAGE
+        self.setTitle("",  for: .normal)
+        self.setImage(nil, for: .normal)
         
+        /// ANIMATION
         UIView.animate(withDuration: 0.1, animations: { () -> Void in
-            self.layer.cornerRadius = self.frame.height / 2 // corner radius should be half the height to have a circle corners
+            /// Chưa thấy được animation chỗ này
+            self.layer.cornerRadius = self.frame.height/2
         }, completion: { completed -> Void in
-            self.shrink()   // reduce the width to be equal to the height in order to have a circle
-            self.spiner.animation() // animate spinner
+            self.startShrinkAnimation()
+            self.spiner.startAnimation()
         })
     }
     
-    /**
-     stop animating the button.
-     
-     - Parameter animationStyle: the style of the stop animation.
-     - Parameter revertAfterDelay: revert the button to the original state after a delay to give opportunity to custom transition.
-     - Parameter completion: a callback closure to be called once the animation finished, it may be useful to transit to another view controller, example transit to the home screen from the login screen.
-     
-     */
     open func stopAnimation(animationStyle:StopAnimationStyle = .normal, revertAfterDelay delay: TimeInterval = 1.0, completion:(()->Void)? = nil) {
 
         let delayToRevert = max(delay, 0.2)
@@ -138,6 +132,8 @@ public enum StopAnimationStyle {
             self.expand(completion: completion, revertDelay: delayToRevert) // scale the round button to fill the screen
         }
     }
+
+    // MARK: Private
     
     private func shakeAnimation(completion:(()->Void)?) {
         let keyFrame = CAKeyframeAnimation(keyPath: "position")
@@ -160,6 +156,8 @@ public enum StopAnimationStyle {
         }
         self.layer.add(keyFrame, forKey: keyFrame.keyPath)
 
+        /// Khi nào gọi hàm này ta?
+        /// Sao có chỗ gọi có chỗ không nhỉ?
         CATransaction.commit()
     }
     
@@ -189,20 +187,23 @@ public enum StopAnimationStyle {
         CATransaction.commit()
     }
     
-    private func shrink() {
-        let shrinkAnim                   = CABasicAnimation(keyPath: "bounds.size.width")
-        shrinkAnim.fromValue             = frame.width
-        shrinkAnim.toValue               = frame.height
-        shrinkAnim.duration              = shrinkDuration
-        shrinkAnim.timingFunction        = shrinkCurve
-        shrinkAnim.fillMode              = .forwards
-        shrinkAnim.isRemovedOnCompletion = false
+    private func startShrinkAnimation() {
+        /// Tạo CABasicAnimation cho self.width
+        /// Co width lại bằng height
+        let shrinkAnim = CABasicAnimation(keyPath: "bounds.size.width")
+        shrinkAnim.fromValue = frame.width
+        shrinkAnim.toValue = frame.height
+        shrinkAnim.duration = shrinkDuration /// duration của animation
+        shrinkAnim.timingFunction = shrinkCurve /// chưa biết timingFunction là gì?
+        shrinkAnim.fillMode = .forwards /// chưa biết luôn?
+        shrinkAnim.isRemovedOnCompletion = false    /// remove sau khi completion animation?
         
+        /// Add animation vào layer
         layer.add(shrinkAnim, forKey: shrinkAnim.keyPath)
     }
     
     private func expand(completion:(()->Void)?, revertDelay: TimeInterval) {
-
+        
         let expandAnim = CABasicAnimation(keyPath: "transform.scale")
         let expandScale = (UIScreen.main.bounds.size.height/self.frame.size.height)*2
         expandAnim.fromValue            = 1.0
@@ -228,7 +229,7 @@ public enum StopAnimationStyle {
     
 }
 
-
+/// Chưa  sử dụng trong project này
 public extension UIImage {
     convenience init?(color: UIColor, size: CGSize = CGSize(width: 1, height: 1)) {
         let rect = CGRect(origin: .zero, size: size)
@@ -242,6 +243,3 @@ public extension UIImage {
         self.init(cgImage: cgImage)
     }
 }
-
-
-
