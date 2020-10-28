@@ -27,9 +27,9 @@ class FirstViewController: UIViewController {
                 ///     .expand: useful when the task has been compeletd successfully and you want to expand the button and transit to another view controller in the completion callback
                 ///     .shake: when you want to reflect to the user that the task did not complete successfly
                 ///     .normal
-                button.stopAnimation(animationStyle: .expand, completion: {
-                    let secondVC = SecondViewController()
-                    self.present(secondVC, animated: true, completion: nil)
+                button.stopAnimation(animationStyle: .shake, completion: {
+                    ///let secondVC = SecondViewController()
+                    ///self.present(secondVC, animated: true, completion: nil)
                 })
             })
         })

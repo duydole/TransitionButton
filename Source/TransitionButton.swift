@@ -136,32 +136,35 @@ public enum StopAnimationStyle {
     // MARK: Private
     
     private func shakeAnimation(completion:(()->Void)?) {
+        /// Shake khi stop animation
+        /// Không dùng BasicAnimation mà dùng KeyFrameAnimation
+        /// KeyPath là position nghĩa là tao muốn animation position của Button
         let keyFrame = CAKeyframeAnimation(keyPath: "position")
-        let point = self.layer.position
-        keyFrame.values = [NSValue(cgPoint: CGPoint(x: CGFloat(point.x), y: CGFloat(point.y))),
-                           NSValue(cgPoint: CGPoint(x: CGFloat(point.x - 10), y: CGFloat(point.y))),
-                           NSValue(cgPoint: CGPoint(x: CGFloat(point.x + 10), y: CGFloat(point.y))),
-                           NSValue(cgPoint: CGPoint(x: CGFloat(point.x - 10), y: CGFloat(point.y))),
-                           NSValue(cgPoint: CGPoint(x: CGFloat(point.x + 10), y: CGFloat(point.y))),
-                           NSValue(cgPoint: CGPoint(x: CGFloat(point.x - 10), y: CGFloat(point.y))),
-                           NSValue(cgPoint: CGPoint(x: CGFloat(point.x + 10), y: CGFloat(point.y))),
-                           NSValue(cgPoint: point)]
+        let curPoint = self.layer.position
+        keyFrame.values = [NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x - 10), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x + 10), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x - 10), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x + 10), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x - 10), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: CGPoint(x: CGFloat(curPoint.x + 10), y: CGFloat(curPoint.y))),
+                           NSValue(cgPoint: curPoint)]
         
         keyFrame.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        keyFrame.duration = 0.7
-        self.layer.position = point
+        keyFrame.duration = 3.0
+        self.layer.position = curPoint
+        /// Add keyframe animation
+        self.layer.add(keyFrame, forKey: keyFrame.keyPath)
 
+        /// Gọi completion sau khi animation xong
         CATransaction.setCompletionBlock {
             completion?()
         }
-        self.layer.add(keyFrame, forKey: keyFrame.keyPath)
-
-        /// Khi nào gọi hàm này ta?
-        /// Sao có chỗ gọi có chỗ không nhỉ?
         CATransaction.commit()
     }
     
     private func setOriginalState(completion:(()->Void)?) {
+        /// Set về trạng thái original của Button
         self.animateToOriginalWidth(completion: completion)
         self.spiner.stopAnimation()
         self.setTitle(self.cachedTitle, for: .normal)
@@ -171,6 +174,7 @@ public enum StopAnimationStyle {
     }
  
     private func animateToOriginalWidth(completion:(()->Void)?) {
+        /// Animation về trạng thái original
         let shrinkAnim = CABasicAnimation(keyPath: "bounds.size.width")
         shrinkAnim.fromValue = (self.bounds.height)
         shrinkAnim.toValue = (self.bounds.width)
@@ -178,12 +182,12 @@ public enum StopAnimationStyle {
         shrinkAnim.timingFunction = shrinkCurve
         shrinkAnim.fillMode = .forwards
         shrinkAnim.isRemovedOnCompletion = false
+        self.layer.add(shrinkAnim, forKey: shrinkAnim.keyPath)
 
+        /// Set completionBlock sau khi transition xong
         CATransaction.setCompletionBlock {
             completion?()
         }
-        self.layer.add(shrinkAnim, forKey: shrinkAnim.keyPath)
-
         CATransaction.commit()
     }
     
@@ -203,27 +207,31 @@ public enum StopAnimationStyle {
     }
     
     private func expand(completion:(()->Void)?, revertDelay: TimeInterval) {
-        
+        /// Expand animation Button
+        /// Create animation and setup
         let expandAnim = CABasicAnimation(keyPath: "transform.scale")
         let expandScale = (UIScreen.main.bounds.size.height/self.frame.size.height)*2
-        expandAnim.fromValue            = 1.0
-        expandAnim.toValue              = max(expandScale,26.0)
-        expandAnim.timingFunction       = expandCurve
-        expandAnim.duration             = 0.4
-        expandAnim.fillMode             = .forwards
-        expandAnim.isRemovedOnCompletion  = false
-        
+        expandAnim.fromValue = 1.0
+        expandAnim.toValue = max(expandScale,26.0)
+        expandAnim.timingFunction = expandCurve
+        expandAnim.duration = 1.0 /// duration expand
+        expandAnim.fillMode = .forwards
+        expandAnim.isRemovedOnCompletion = false
+        layer.add(expandAnim, forKey: expandAnim.keyPath)
+
+        /// Set completion block sau khi animation xong:
+        /// Commit all changes made during the current transaction. Raises an exception if no current transaction exists
+        /// Q: Chưa biết commit để làm gì?
+        /// Nếu ko commit thì vẫn chạy được mà?
         CATransaction.setCompletionBlock {
             completion?()
-            // We return to original state after a delay to give opportunity to custom transition
+            
+            /// DispatchAfter để reset button về trạng thái original
             DispatchQueue.main.asyncAfter(deadline: .now() + revertDelay) {
                 self.setOriginalState(completion: nil)
-                self.layer.removeAllAnimations() // make sure we remove all animation
+                self.layer.removeAllAnimations()
             }
         }
-        
-        layer.add(expandAnim, forKey: expandAnim.keyPath)
-        
         CATransaction.commit()
     }
     

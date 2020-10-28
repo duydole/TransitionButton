@@ -50,6 +50,7 @@ class SpinerLayer: CAShapeLayer {
         
         /// Cách vẽ nửa hình tròn trắng trên layer:
         ///The path defining the shape to be rendered. Animatable.
+        /// self là CAShapLayer kết hợp UIBezierPath để vẽ hình
         self.path = UIBezierPath(arcCenter: center,                     /// center của layer
                                  radius: radius,                        /// bán kính
                                  startAngle: CGFloat(startAngle),
